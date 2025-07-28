@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  web_service:
+    build: .
+    container_name: Patria_WebApp 
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - service_db
+    environment:
+      - APACHE_RUN_USER=#1000
+      - APACHE_RUN_GROUP=#1000
+   
+
+  service_db:
+    image: mariadb:latest
+    container_name: Patria_DB
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: PatriaDB
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    
+
+
+volumes:
+  db_data:

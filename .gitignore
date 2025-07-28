@@ -1,0 +1,17 @@
+composer.phar
+/composer.lock
+/vendor/
+.env
+.env.*
+error_log
+/s3/
+.vscode/
+.idx/
+/uploads/
+.rar
+.zip
+
+
+# /modules/**
+# /plugins/**
+# /themes/**
