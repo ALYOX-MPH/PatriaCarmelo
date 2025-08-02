@@ -15,7 +15,7 @@ $conn = $db->connect();
 // Recibir los datos en formato JSON
 $data = json_decode(file_get_contents('php://input'), true);
 // var_dump($data);
-$seguroId = $data['seguro_id'];
+$seguroId =  isset($data['seguro_id']) ? $data['seguro_id'] : 0;
 $monto = $data['monto'];
 
 // Verificar que los datos estén completos

@@ -9,7 +9,7 @@ services:
     volumes:
       - ./:/var/www/html
     depends_on:
-      - service_db
+      - service_db  
     environment:
       - APACHE_RUN_USER=#1000
       - APACHE_RUN_GROUP=#1000
