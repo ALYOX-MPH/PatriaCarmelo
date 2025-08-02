@@ -1,3 +1,24 @@
+
+<?php
+define('ROOT', dirname(__DIR__, 2));
+require_once ROOT . '/Models/Model_DB.php';
+
+$db = new Model_DB();
+$conn = $db->connect();
+
+$busqueda = $_GET['buscar'] ?? '';
+
+if ($busqueda) {
+    $stmt = $conn->prepare("SELECT * FROM seguros WHERE nombre LIKE :buscar OR modelo LIKE :buscar OR marca LIKE :buscar");
+    $stmt->execute(['buscar' => "%$busqueda%"]);
+} else {
+    $stmt = $conn->prepare("SELECT * FROM seguros");
+    $stmt->execute();
+}
+
+$seguros = $stmt->fetchAll(PDO::FETCH_ASSOC);
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -60,10 +81,10 @@
     <div class="card p-3 mb-4">
         <div class="row">
       <h5 class="col-6 mb-2">Todas los registros de seguros</h5>
-      <form class="col-6 d-flex">
-       <input class="form-control me-2" type="search" placeholder="Buscar" aria-label="Search">
-       <button class="btn btn-outline-success" type="submit">Buscar</button>
-     </form>
+      <form class="col-6 d-flex" method="GET" action="">
+  <input class="form-control me-2" type="search" name="buscar" placeholder="Buscar por cliente, modelo o marca">
+  <button class="btn btn-outline-success" type="submit">Buscar</button>
+</form>
      </div>
       <p class="mb-5">Verifica y edita los registros de seguros</p>
       <table class="table table-hover">
@@ -79,154 +100,29 @@
           </tr>
         </thead>
         <tbody>
+         <?php foreach ($seguros as $seguro): ?>
           <tr>
-            <td>Juan Pérez</td>
-            <td>Carro - Toyota Corolla</td>
-            <td>2025-07-25</td>
-            <td>$150.00</td>
-            <td>$300.00</td>
-            <td><span class="badge badge-proceso bg-success">Pagado</span></td>
+            <td><?= htmlspecialchars($seguro['nombre']) ?></td>
+            <td><?= ucfirst($seguro['tipo_vehiculo']) ?> - <?= htmlspecialchars($seguro['marca']) ?> <?= htmlspecialchars($seguro['modelo']) ?></td>
+            <td><?= htmlspecialchars($seguro['fecha_creacion'] ?? 'N/A') ?></td>
+            <td>$<?= number_format($seguro['montoInicial'], 2) ?></td>
+            <td>$<?= number_format($seguro['montoSeguro'], 2) ?></td>
             <td>
-              <button class="btn btn-secondary btn-sm btn-success"><i class="bi bi-eye-fill"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-download"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-printer-fill"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-trash3-fill"></i></button>
+                <?php
+                    $estado = strtolower($seguro['estado']);
+                    $clase = $estado === 'pagado' ? 'bg-success' : ($estado === 'vencido' ? 'bg-danger' : 'bg-warning');
+                ?>
+                <span class="badge <?= $clase ?>"><?= ucfirst($estado) ?></span>
             </td>
-          </tr>
-          <tr>
-            <td>Ana Gómez</td>
-            <td>Motor - Honda C90</td>
-            <td>2025-07-20</td>
-            <td>$100.00</td>
-            <td>$200.00</td>
-            <td><span class="badge badge-proceso bg-warning">En proceso</span></td>
             <td>
-              
-              <button class="btn btn-secondary btn-sm btn-success"><i class="bi bi-eye-fill"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-download"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-printer-fill"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-trash3-fill"></i></button>
+                <button class="btn btn-success btn-sm"><i class="bi bi-eye-fill"></i></button>
+                <button class="btn btn-danger btn-sm"><i class="bi bi-download"></i></button>
+                <button class="btn btn-danger btn-sm"><i class="bi bi-printer-fill"></i></button>
+                <button class="btn btn-danger btn-sm"><i class="bi bi-trash3-fill"></i></button>
             </td>
-          </tr>
-          <tr>
-            <td>Mario Ruiz</td>
-            <td>Carro - Kia Rio</td>
-            <td>2025-07-18</td>
-            <td>$120.00</td>
-            <td>$240.00</td>
-            <td><span class="badge badge-pendiente bg-danger">Vencido</span></td>
-            <td>
+        </tr>
+          <?php endforeach; ?>
 
-              <button class="btn btn-secondary btn-sm btn-success"><i class="bi bi-eye-fill"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-download"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-printer-fill"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-trash3-fill"></i></button>
-            </td>
-          </tr>
-          <tr>
-            <td>Laura Díaz</td>
-            <td>Motor - AX100</td>
-            <td>2025-07-16</td>
-            <td>$80.00</td>
-            <td>$160.00</td>
-            <td><span class="badge badge-proceso bg-warning">En proceso</span></td>
-            <td>
-            <button class="btn btn-secondary btn-sm btn-success"><i class="bi bi-eye-fill"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-download"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-printer-fill"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-trash3-fill"></i></button>
-            </td>
-
-            <tr>
-            <td>Juan Pérez</td>
-            <td>Carro - Toyota Corolla</td>
-            <td>2025-07-25</td>
-            <td>$150.00</td>
-            <td>$300.00</td>
-            <td><span class="badge badge-proceso bg-success">Pagado</span></td>
-            <td>
-              <button class="btn btn-secondary btn-sm btn-success"><i class="bi bi-eye-fill"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-download"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-printer-fill"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-trash3-fill"></i></button>
-            </td>
-          </tr>
-
-          <tr>
-            <td>Juan Pérez</td>
-            <td>Carro - Toyota Corolla</td>
-            <td>2025-07-25</td>
-            <td>$150.00</td>
-            <td>$300.00</td>
-            <td><span class="badge badge-proceso bg-success">Pagado</span></td>
-            <td>
-              <button class="btn btn-secondary btn-sm btn-success"><i class="bi bi-eye-fill"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-download"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-printer-fill"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-trash3-fill"></i></button>
-            </td>
-          </tr>
-
-          <tr>
-            <td>Juan Pérez</td>
-            <td>Carro - Toyota Corolla</td>
-            <td>2025-07-25</td>
-            <td>$150.00</td>
-            <td>$300.00</td>
-            <td><span class="badge badge-proceso bg-success">Pagado</span></td>
-            <td>
-              <button class="btn btn-secondary btn-sm btn-success"><i class="bi bi-eye-fill"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-download"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-printer-fill"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-trash3-fill"></i></button>
-            </td>
-          </tr>
-
-          <tr>
-            <td>Juan Pérez</td>
-            <td>Carro - Toyota Corolla</td>
-            <td>2025-07-25</td>
-            <td>$150.00</td>
-            <td>$300.00</td>
-            <td><span class="badge badge-proceso bg-success">Pagado</span></td>
-            <td>
-              <button class="btn btn-secondary btn-sm btn-success"><i class="bi bi-eye-fill"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-download"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-printer-fill"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-trash3-fill"></i></button>
-            </td>
-          </tr>
-
-          <tr>
-            <td>Juan Pérez</td>
-            <td>Carro - Toyota Corolla</td>
-            <td>2025-07-25</td>
-            <td>$150.00</td>
-            <td>$300.00</td>
-            <td><span class="badge badge-proceso bg-success">Pagado</span></td>
-            <td>
-              <button class="btn btn-secondary btn-sm btn-success"><i class="bi bi-eye-fill"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-download"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-printer-fill"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-trash3-fill"></i></button>
-            </td>
-          </tr>
-
-          <tr>
-            <td>Juan Pérez</td>
-            <td>Carro - Toyota Corolla</td>
-            <td>2025-07-25</td>
-            <td>$150.00</td>
-            <td>$300.00</td>
-            <td><span class="badge badge-proceso bg-success">Pagado</span></td>
-            <td>
-              <button class="btn btn-secondary btn-sm btn-success"><i class="bi bi-eye-fill"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-download"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-printer-fill"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-trash3-fill"></i></button>
-            </td>
-          </tr>
-          </tr>
         </tbody>
       </table>
     </div>
@@ -236,4 +132,5 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 </html>

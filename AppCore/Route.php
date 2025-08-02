@@ -1,48 +1,45 @@
 <?php
-
 $URL= $_SERVER["REQUEST_URI"];
-$Module= strtolower( trim($URL, "/"));
+$CleanURL = parse_url($URL, PHP_URL_PATH); // Elimina query strings
+$Module= strtolower(trim($CleanURL, "/"));
 
-
-
-
+// echo "DEBUG: URL = $URL | Module = $Module";
 
 switch ($Module) {
-
-    // Landing Page
     case 'home':
         require_once "./modules/LandingPage/index.php";
         break;
 
-     case 'agregarseguro':
-            require_once "./modules/LandingPage/formSeguros.php";
-            break;
-        
+    case 'agregarseguro':
+        require_once "./modules/LandingPage/formSeguros.php";
+        break;
+
     case 'pagoscuotas':
         require_once "modules/LandingPage/pagosCuotas.php";
         break;
 
-     case 'registros':
+    case 'registros':
         require_once "./modules/LandingPage/registros.php";
-        break;    
+        break;
 
-     case 'tarifas':
+    case 'tarifas':
         require_once "./modules/LandingPage/tarifas.php";
         break;
-    
-     case 'reportes':
+
+    case 'reportes':
         require_once "./modules/LandingPage/reportes.php";
         break;
 
     case 'error':
-        require_once "./modules/AdminPanel/error.php";
+        require_once "./modules/LandingPage/error.php";
         break;
-    
+
     case 'login':
         require_once "./modules/Login/login.php";
         break;
-   
+
     default:
-       require_once "./modules/AdminPanel/error.php";
+        require_once "./modules/LandingPage/index.php";
         break;
 }
+

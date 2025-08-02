@@ -1,3 +1,16 @@
+<?php
+define('ROOT', dirname(__DIR__, 2));
+require_once ROOT . '/Models/Model_DB.php';
+
+$db = new Model_DB();
+$conn = $db->connect();
+
+// Obtener solo los seguros que no estén pagados
+$stmt = $conn->prepare("SELECT * FROM seguros WHERE estado != 'Pagado'");
+$stmt->execute();
+
+$seguros = $stmt->fetchAll(PDO::FETCH_ASSOC);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -66,72 +79,40 @@
             <th>Cliente</th>
             <th>Vehículo</th>
             <th>Fecha</th>
+            <th>Total Pagado</th>
             <th>Total Cuota</th>
-            <th>Total A pagar</th>
             <th>Estado</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>Juan Pérez</td>
-            <td>Carro - Toyota Corolla</td>
-            <td>2025-07-25</td>
-            <td>$150.00</td>
-            <td>$300.00</td>
-            <td><span class="badge badge-proceso bg-warning">En proceso</span></td>
-            <td>              
-              <button class="btn btn-secondary btn-sm btn-success aplicarPago"
-              data-cuota="$150.00" data-total="$300.00">Aplicar Pago</button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-download"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-printer-fill"></i></button>
-            </td>
-          </tr>
-          <tr>
-            <td>Ana Gómez</td>
-            <td>Motor - Honda C90</td>
-            <td>2025-07-20</td>
-            <td>$100.00</td>
-            <td>$200.00</td>
-            <td><span class="badge badge-proceso bg-warning">En proceso</span></td>
-            <td>
-              
-             <button class="btn btn-secondary btn-sm btn-success aplicarPago"
-              data-cuota="$150.00" data-total="$300.00">Aplicar Pago</button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-download"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-printer-fill"></i></button>
-            </td>
-          </tr>
-          <tr>
-            <td>Mario Ruiz</td>
-            <td>Carro - Kia Rio</td>
-            <td>2025-07-18</td>
-            <td>$120.00</td>
-            <td>$240.00</td>
-            <td><span class="badge badge-proceso bg-warning">En proceso</span></td>
-            <td>
+  <?php foreach ($seguros as $seguro): ?>
+    <tr>
+      <td><?= htmlspecialchars($seguro['nombre']) ?></td>
+      <td><?= htmlspecialchars($seguro['tipo_vehiculo']) ?> - <?= htmlspecialchars($seguro['marca']) ?></td>
+      <td><?= htmlspecialchars($seguro['fecha_creacion']) ?></td>
+      <td>$<?= number_format($seguro['montoInicial'], 2) ?></td>
+      <td>$<?= number_format($seguro['montoSeguro'], 2) ?></td>
+      <td>
+        <span class="badge <?= $seguro['estado'] === 'En proceso' ? 'bg-warning' : 'bg-success' ?>">
+          <?= htmlspecialchars($seguro['estado']) ?>
+        </span>
+      </td>
+      <td>
+        <button 
+          class="btn btn-secondary btn-sm btn-success aplicarPago"
+          data-id="<?= $seguro['id'] ?>"
+          data-cuota="<?= $seguro['montoInicial'] ?>"
+          data-total="<?= $seguro['montoSeguro'] ?>">
+          Aplicar Pago
+        </button>
 
-              <button class="btn btn-secondary btn-sm btn-success aplicarPago"
-              data-cuota="$150.00" data-total="$300.00">Aplicar Pago</button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-download"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-printer-fill"></i></button>
-            </td>
-          </tr>
-          <tr>
-            <td>Laura Díaz</td>
-            <td>Motor - AX100</td>
-            <td>2025-07-16</td>
-            <td>$80.00</td>
-            <td>$160.00</td>
-            <td><span class="badge badge-proceso bg-warning">En proceso</span></td>
-            <td>
-              <button class="btn btn-secondary btn-sm btn-success aplicarPago"
-              data-cuota="$150.00" data-total="$300.00">Aplicar Pago</button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-download"></i></button>
-              <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-printer-fill"></i></button>
-            </td>
-          </tr>
-        </tbody>
+        <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-download"></i></button>
+        <button class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-printer-fill"></i></button>
+      </td>
+    </tr>
+  <?php endforeach; ?>
+</tbody>
       </table>
     </div>
         </div>
@@ -159,19 +140,50 @@
 </div>
 
 <script>
-  document.querySelectorAll('.aplicarPago').forEach(btn => {
-    btn.addEventListener('click', function () {
-      const monto = this.getAttribute('data-cuota');
-      const total = this.getAttribute('data-total');
-      
-      document.getElementById('montoPagarModal').textContent = monto;
-      document.getElementById('totalSeguroModal').textContent = total;
-      
-      const modal = new bootstrap.Modal(document.getElementById('modalPago'));
-      modal.show();
-    });
+let seguroId = null;
+
+document.querySelectorAll('.aplicarPago').forEach(btn => {
+  btn.addEventListener('click', function () {
+    const monto = this.getAttribute('data-cuota');
+    const total = this.getAttribute('data-total');
+    idSeguroSeleccionado = this.getAttribute('data-id'); // asegúrate que esté como data-id en el botón
+
+    document.getElementById('montoPagarModal').textContent = monto;
+    document.getElementById('totalSeguroModal').textContent = total;
+
+    const modal = new bootstrap.Modal(document.getElementById('modalPago'));
+    modal.show();
   });
+});
+
+document.querySelector('#modalPago .btn-primary').addEventListener('click', function () {
+  const input = document.querySelector('#modalPago input');
+  const monto = parseFloat(input.value);
+
+  if (!monto || monto <= 0) {
+    alert("Por favor ingrese un monto válido.");
+    return;
+  }
+
+  fetch('guardarPago.php', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({seguro_id: seguroId, monto: monto})
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert("Pago registrado. Estado: " + data.estado);
+    location.reload(); // para reflejar cambios en tabla
+   
+  })
+  .catch(err => {
+    // alert("Error al guardar el pago");
+    window.location.href="modules\LandingPage\pruebaFrank.php";
+    console.error(err);
+  });
+});
 </script>
+
 
         
     </body>

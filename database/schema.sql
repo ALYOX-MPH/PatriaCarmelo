@@ -1,0 +1,36 @@
+-- CREATE TABLE IF NOT EXISTS seguros (
+--     id INT AUTO_INCREMENT PRIMARY KEY,
+--     nombre VARCHAR(100) NOT NULL,
+--     poliza VARCHAR(50) NOT NULL,
+--     cedula VARCHAR(20) NOT NULL,
+--     telefono VARCHAR(20),
+--     direccion VARCHAR(255),
+
+--     tipo_vehiculo VARCHAR(50),
+--     servicio VARCHAR(50),
+--     marca VARCHAR(50),
+--     ano VARCHAR(50),
+--     modelo VARCHAR(50),
+--     chasisVehiculo VARCHAR(100),
+--     placa VARCHAR(20),
+--     color VARCHAR(30),
+--     tonCilVehiculo VARCHAR(30),
+--     pasajerosVehiculo INT,
+--     observacionesVehiculo TEXT,
+
+--     tipoSeguro VARCHAR(50),
+--     tipo_pago VARCHAR(50),
+--     montoSeguro DECIMAL(10, 2),
+--     montoInicial DECIMAL(10, 2),
+--     estado VARCHAR(30) DEFAULT 'En proceso',
+
+--     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- );
+
+-- CREATE TABLE pagos (
+--     id INT AUTO_INCREMENT PRIMARY KEY,
+--     seguro_id INT NOT NULL,
+--     monto DECIMAL(10,2) NOT NULL,
+--     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+--     FOREIGN KEY (seguro_id) REFERENCES seguros(id)
+-- );
