@@ -1,0 +1,32 @@
+ Instalar ext-gd en tu PHP
+En Windows, abre tu php.ini (la que te mostró Composer:
+C:\Program Files\PHP\php.ini) y busca esta línea:
+
+ini
+Copiar
+Editar
+;extension=gd
+y cámbiala a:
+
+ini
+Copiar
+Editar
+extension=gd
+Guarda el archivo y reinicia Apache/Nginx (o si usas CLI, reinicia la terminal para recargar).
+En Linux sería:
+
+bash
+Copiar
+Editar
+sudo apt install php-gd
+sudo service apache2 restart
+2️⃣ Instalar mPDF compatible con PHP 8.4
+Cuando ya tengas gd habilitado, ejecuta:
+
+bash
+Copiar
+Editar
+composer remove mpdf/mpdf
+composer clear-cache
+composer require mpdf/mpdf:^8.2
+Esto instalará mPDF 8.2.5 (última estable para PHP 8.4).
