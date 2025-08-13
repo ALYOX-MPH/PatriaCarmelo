@@ -23,7 +23,8 @@
 --     montoSeguro DECIMAL(10, 2),
 --     montoInicial DECIMAL(10, 2),
 --     estado VARCHAR(30) DEFAULT 'En proceso',
---     ALTER TABLE seguros ADD COLUMN deleted TINYINT(1) DEFAULT 0;
+--     deleted TINYINT(1) DEFAULT 0,
+--     secuencia_seguro VARCHAR(20) DEFAULT NULL; 
 --     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 -- );
 

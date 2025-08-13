@@ -1,0 +1,2 @@
+docker update --restart=unless-stopped Patria_WebApp
+docker update --restart=unless-stopped Patria_DB

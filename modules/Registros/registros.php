@@ -1,5 +1,5 @@
-
 <?php
+session_start(); // inicia secion para poder ditar
 define('ROOT', dirname(__DIR__, 2));
 require_once ROOT . '/Models/Model_DB.php';
 
@@ -9,10 +9,11 @@ $conn = $db->connect();
 $busqueda = $_GET['buscar'] ?? '';
 
 if ($busqueda) {
-    $stmt = $conn->prepare("SELECT * FROM seguros WHERE nombre LIKE :buscar OR modelo LIKE :buscar OR marca LIKE :buscar");
+    // eliminar ocea se pone a uno
+    $stmt = $conn->prepare("SELECT * FROM seguros WHERE (nombre LIKE :buscar OR modelo LIKE :buscar OR marca LIKE :buscar) AND deleted = 0");
     $stmt->execute(['buscar' => "%$busqueda%"]);
 } else {
-    $stmt = $conn->prepare("SELECT * FROM seguros");
+    $stmt = $conn->prepare("SELECT * FROM seguros WHERE deleted = 0");
     $stmt->execute();
 }
 
@@ -23,7 +24,7 @@ $seguros = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <title>Creacion de Seguros</title>
 
     <style>
-         body {
+            body {
       background-color: #f5f5f5;
       color: #333;
     }
@@ -55,7 +56,7 @@ $seguros = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <!-- Sidebar -->
 <?php include 'modules/layout/sidebar.php'; ?>
     <div class="container-fluid main-content">
-         <!-- Últimos seguros registrados -->
+            <!-- Últimos seguros registrados -->
     <div class="card p-3 mb-4">
         <div class="row">
       <h5 class="col-6 mb-2">Todas los registros de seguros</h5>
@@ -63,7 +64,7 @@ $seguros = $stmt->fetchAll(PDO::FETCH_ASSOC);
   <input class="form-control me-2" type="search" name="buscar" placeholder="Buscar por cliente, modelo o marca">
   <button class="btn btn-outline-success" type="submit">Buscar</button>
 </form>
-     </div>
+      </div>
       <p class="mb-5">Verifica y edita los registros de seguros</p>
       <table class="table table-hover">
         <thead>
@@ -78,7 +79,7 @@ $seguros = $stmt->fetchAll(PDO::FETCH_ASSOC);
           </tr>
         </thead>
         <tbody>
-         <?php foreach ($seguros as $seguro): ?>
+          <?php foreach ($seguros as $seguro): ?>
           <tr>
             <td><?= htmlspecialchars($seguro['nombre']) ?></td>
             <td><?= ucfirst($seguro['tipo_vehiculo']) ?> - <?= htmlspecialchars($seguro['marca']) ?> <?= htmlspecialchars($seguro['modelo']) ?></td>
@@ -93,30 +94,29 @@ $seguros = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <span class="badge <?= $clase ?>"><?= ucfirst($estado) ?></span>
             </td>
             <td>
-               <button onclick="window.location.href='/mostrarregistros?id=<?= $seguro['id'] ?>'" class="btn btn-success btn-sm">
+               <button onclick="window.location.href='/mostrarregistros?id=<?= htmlspecialchars($seguro['id']) ?>'" class="btn btn-success btn-sm">
                  <i class="bi bi-eye-fill"></i>
                 </button>
 
-                <button onclick="window.location.href='/editarregistros?id=<?= $seguro['id'] ?>'" class="btn btn-warning btn-sm">
+                <button onclick="window.location.href='/editarregistros?id=<?= htmlspecialchars($seguro['id']) ?>'" class="btn btn-warning btn-sm">
                  <i class="bi bi-pencil-square"></i>
                 </button>
 
-                <a href="/modules/Registros/generar_pdf.php?id=<?= $seguro['id'] ?>" target="_blank" class="btn btn-secondary btn-sm btn-info me-1">
-                <i class="bi bi-download " ></i>
+                <a href="/modules/Registros/generar_pdf.php?id=<?= htmlspecialchars($seguro['id']) ?>" target="_blank" class="btn btn-secondary btn-sm btn-info me-1">
+                 <i class="bi bi-download " ></i>
                 </a>
                 
-                 <button onclick="window.location.href='/descargarpdf?id=<?= $seguro['id'] ?>'" class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-printer-fill"></i></button>
+                    <button onclick="window.location.href='/descargarpdf?id=<?= htmlspecialchars($seguro['id']) ?>'" class="btn btn-secondary btn-sm btn-danger"><i class="bi bi-printer-fill"></i></button>
 
-                 <a href="javascript:void(0);" 
-                    onclick="confirmarEliminar(<?= isset($row['id']) ? intval($row['id']) : 0 ?>)"
- 
-                    class="btn btn-danger btn-sm">
-                      <i class="fa fa-trash"></i> Eliminar
-                  </a>
+                    <a href="javascript:void(0);" 
+                       onclick="confirmarEliminar(<?= htmlspecialchars($seguro['id']) ?>)"
+                       class="btn btn-danger btn-sm">
+                       <i class="fa fa-trash"></i> Eliminar
+                    </a>
 
             </td>
         </tr>
-          <?php endforeach; ?>
+           <?php endforeach; ?>
 
         </tbody>
       </table>
@@ -160,13 +160,25 @@ function confirmarEliminar(id) {
                     });
                 }
             })
-            .catch(() => {
+            .catch((error) => { //esto es para error 
+                console.error('Error en la petición:', error); // Para depuración
                 Swal.fire({
                     icon: 'error',
-                    title: 'Error al conectar con el servidor'
+                    title: 'Error al conectar con el servidor o procesar la respuesta'
                 });
             });
         }
     });
 }
+
+// --- Muestra SweetAlert si hay un mensaje en la sesión ---
+<?php if (isset($_SESSION['message'])): ?>
+    Swal.fire({
+        icon: '<?= $_SESSION['message']['type'] ?>',
+        title: '<?= $_SESSION['message']['text'] ?>',
+        showConfirmButton: false, 
+        timer: 2000 
+    });
+    <?php unset($_SESSION['message']); ?>
+<?php endif; ?>
 </script>

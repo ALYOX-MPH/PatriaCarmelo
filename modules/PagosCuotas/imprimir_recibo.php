@@ -36,7 +36,7 @@ $stmt->execute([$seguro_id]);
 $pago = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // Ruta del logo (ruta absoluta del sistema). Ajusta si tu logo está en otra carpeta.
-$logoPath = __DIR__ . '/../img/carmelo.png';
+$logoPath = __DIR__ . '/../img/LogoPatria.png';
 if (!file_exists($logoPath)) {
     // Si no existe, opcionalmente define una URL pública o deja vacío
     $logoPath = '';

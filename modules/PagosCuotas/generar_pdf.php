@@ -33,7 +33,7 @@ $stmt->execute([$id]);
 $pagos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Logo y colores del negocio
-$logo = __DIR__ . '/../img/carmelo.png';
+$logo = __DIR__ . '/../img/LogoPatria.png';
 
 $colorPrimario = "#B22222"; 
 $colorSecundario = "#333333"; 

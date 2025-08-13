@@ -9,10 +9,10 @@ $conn = $db->connect();
 $busqueda = $_GET['buscar'] ?? '';
 
 if ($busqueda) {
-    $stmt = $conn->prepare("SELECT * FROM seguros WHERE nombre LIKE :buscar OR modelo LIKE :buscar OR marca LIKE :buscar");
+    $stmt = $conn->prepare("SELECT * FROM seguros LIMIT 5");
     $stmt->execute(['buscar' => "%$busqueda%"]);
 } else {
-    $stmt = $conn->prepare("SELECT * FROM seguros");
+    $stmt = $conn->prepare("SELECT * FROM seguros WHERE deleted = 0 ORDER BY fecha_creacion DESC LIMIT 5");
     $stmt->execute();
 }
 

@@ -1,4 +1,5 @@
 <?php
+session_start(); // Inicia la sesión al principio del script
 define('ROOT', dirname(__DIR__, 2));
 require_once ROOT . '/Models/Model_DB.php';
 
@@ -8,25 +9,22 @@ $conn = $db->connect();
 $seguro = [];
 $id = $_GET['id'] ?? null;
 
-if ($id) {
-    $stmt = $conn->prepare("SELECT * FROM seguros WHERE id = :id");
-    $stmt->execute(['id' => $id]);
-    $seguro = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$seguro) {
-        echo "Seguro no encontrado.";
+// --- Manejo de la solicitud POST para actualizar el registro ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Asegurarse de que el ID esté presente para la actualización
+    if (!$id) {
+        $_SESSION['message'] = ['type' => 'error', 'text' => 'ID de seguro no proporcionado para la actualización.'];
+        header('Location: registros.php'); // Redirecciona de vuelta a la lista si no hay ID
         exit;
     }
-}
 
-// Actualizar datos si se envía por POST
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Recolecta los datos del formulario POST
     $data = [
-        'id' => $id,
+        'id' => $id, // Usa el ID de la URL (GET) para identificar el registro a editar
         'nombre' => $_POST['nombre'] ?? '',
         'poliza' => $_POST['poliza'] ?? '',
         'cedula' => $_POST['cedula'] ?? '',
-        'telefono' => $_POST['numero'] ?? '',
+        'telefono' => $_POST['numero'] ?? '', // Se mapea 'numero' a 'telefono'
         'direccion' => $_POST['direccion'] ?? '',
         'tipo_vehiculo' => $_POST['tipo_vehiculo'] ?? '',
         'servicio' => $_POST['servicio'] ?? '',
@@ -43,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'tipo_pago' => $_POST['tipo_pago'] ?? '',
         'montoSeguro' => $_POST['montoSeguro'] ?? 0,
         'montoInicial' => $_POST['montoInicial'] ?? 0,
-        'estado' => $_POST['estado'] ?? '',
+        'estado' => $_POST['estado'] ?? '', // Debería establecerse desde un input oculto en el formulario
     ];
 
     $sql = "UPDATE seguros SET
@@ -70,21 +68,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         estado = :estado
         WHERE id = :id";
 
-    $stmt = $conn->prepare($sql);
-    $stmt->execute($data);
+    try {
+        $stmt = $conn->prepare($sql);
+        $stmt->execute($data);
+        $_SESSION['message'] = ['type' => 'success', 'text' => '¡Registro actualizado correctamente!'];
+    } catch (PDOException $e) {
+        // Captura cualquier error de la base de datos
+        $_SESSION['message'] = ['type' => 'error', 'text' => 'Error al actualizar el registro: ' . $e->getMessage()];
+        // Puedes loguear el error para depuración: error_log($e->getMessage());
+    }
 
-    echo " <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
-    <script>
-        Swal.fire({
-            icon: 'success',
-            title: '¡Registro actualizado!',
-            text: 'El seguro fue editado correctamente.',
-            confirmButtonText: 'Aceptar'
-        }).then(() => {
-            window.location.href = 'registros.php';
-        });
-    </script>
-    ";
+    // Redirecciona siempre después de un POST para evitar el reenvío del formulario
+    header('Location: registros.php');
+    exit;
+}
+
+// --- Lógica para obtener los datos del seguro (para solicitudes GET o después de una redirección fallida) ---
+if ($id) {
+    $stmt = $conn->prepare("SELECT * FROM seguros WHERE id = :id");
+    $stmt->execute(['id' => $id]);
+    $seguro = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$seguro) {
+        $_SESSION['message'] = ['type' => 'error', 'text' => 'Seguro no encontrado.'];
+        header('Location: registros.php'); // Redirecciona si el seguro no existe
+        exit;
+    }
+} else {
+    // Si no se proporciona un ID a través de GET, redirecciona a la lista
+    $_SESSION['message'] = ['type' => 'error', 'text' => 'ID de seguro no proporcionado para la edición.'];
+    header('Location: registros.php');
     exit;
 }
 ?>
@@ -127,6 +140,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <div class="main-content">
     <h1 class="mt-5">Editar Seguro</h1>
     <form id="seguroForm" method="POST" class="mt-4">
+      <!-- El ID del seguro no necesita ser un campo oculto en el formulario POST
+           ya que lo obtenemos de la URL (GET) y lo pasamos al array $data en el POST.
+           El campo de estado (estadoPago) sí se mantiene como oculto si su valor se maneja dinámicamente. -->
       <input type="hidden" name="estado" id="estadoPago" value="<?= htmlspecialchars($seguro['estado'] ?? 'En proceso') ?>">
 
       <!-- Datos personales -->
@@ -163,7 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $tipos = ["moto","automovilPrivado","automovilPublico","jeepeta","furgoneta","minivan","minibus","camioneta","camionCaja","camionVolteo","autobusPrivado","autobusPublico","maquinariaPesada","cobertura","remolques"];
             foreach ($tipos as $tipo) {
               $selected = ($seguro['tipo_vehiculo'] == $tipo) ? 'selected' : '';
-              echo "<option value='$tipo' $selected>$tipo</option>";
+              echo "<option value='$tipo' $selected>" . ucfirst($tipo) . "</option>"; // Capitaliza para mostrar
             }
             ?>
           </select>
@@ -185,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <input type="text" class="form-control" name="ano" required value="<?= htmlspecialchars($seguro['ano']) ?>">
         </div>
         <div class="col-4 mb-3">
-          <label class="form-label">Modelo</label>
+          <label class="form-label">Modelo</labecl>
           <input type="text" class="form-control" name="modelo" required value="<?= htmlspecialchars($seguro['modelo']) ?>">
         </div>
         <div class="col-4 mb-3">
@@ -224,7 +240,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $tiposSeguro = ["elemental","flexible","superior","plus","elite"];
             foreach ($tiposSeguro as $tipo) {
               $selected = ($seguro['tipoSeguro'] == $tipo) ? 'selected' : '';
-              echo "<option value='$tipo' $selected>$tipo</option>";
+              echo "<option value='$tipo' $selected>" . ucfirst($tipo) . "</option>"; // Capitaliza para mostrar
             }
             ?>
           </select>
@@ -248,7 +264,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       <div class="row">
         <div class="col-6">
-          <a href="/home" class="btn btn-danger mt-3 w-100">Cancelar</a>
+          <a href="registros.php" class="btn btn-danger mt-3 w-100">Cancelar</a>
         </div>
         <div class="col-6">
           <button type="submit" class="btn btn-primary mt-3 w-100">Guardar Cambios</button>
@@ -260,8 +276,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!-- Aquí puedes mantener tus scripts JS para calcular valores dinámicos -->
 <script>
-  // igual que antes: actualización de monto según tipo
-</script>
+  // Si tenías scripts JS para cálculos dinámicos (como la actualización del monto
+  // según el tipo de seguro), asegúrate de que sigan presentes aquí.
+  // Ejemplo:
+  // document.addEventListener('DOMContentLoaded', function() {
+  //     const tipoSeguroSelect = document.querySelector('select[name="tipoSeguro"]');
+  //     const montoSeguroInput = document.getElementById('montoSeguro');
 
+  //     tipoSeguroSelect.addEventListener('change', function() {
+  //         const selectedType = this.value;
+  //         let monto = 0;
+  //         switch (selectedType) {
+  //             case 'elemental': monto = 100; break;
+  //             case 'flexible': monto = 200; break;
+  //             case 'superior': monto = 300; break;
+  //             case 'plus': monto = 400; break;
+  //             case 'elite': monto = 500; break;
+  //             default: monto = 0; break;
+  //         }
+  //         montoSeguroInput.value = monto;
+  //     });
+  // });
+</script>
 
 <?php include 'modules/layout/footer.php'; ?>
