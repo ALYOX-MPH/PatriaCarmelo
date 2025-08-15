@@ -6,8 +6,25 @@ $db = new Model_DB();
 $conn = $db->connect();
 
 // Obtener solo los seguros que no estén pagados
-$stmt = $conn->prepare("SELECT * FROM seguros WHERE estado != 'Pagado'");
-$stmt->execute();
+// $stmt = $conn->prepare("SELECT * FROM seguros WHERE estado != 'Pagado' AND deleted =0 AND (nombre LIKE :buscar OR modelo LIKE :buscar OR marca LIKE :buscar)  ");
+// $stmt->execute();
+
+$busqueda = $_GET['buscar'] ?? '';
+
+// 1. Construir la consulta base
+$sql = "SELECT * FROM seguros WHERE estado != 'Pagado' AND deleted = 0";
+
+$params = [];
+
+// 2. Añadir la condición de búsqueda solo si existe
+if ($busqueda) {
+    $sql .= " AND (nombre LIKE :buscar OR modelo LIKE :buscar OR marca LIKE :buscar OR cedula LIKE :buscar OR secuencia_seguro LIKE :buscar)";
+    $params['buscar'] = "%$busqueda%";
+}
+
+// 3. Preparar y ejecutar la consulta una sola vez
+$stmt = $conn->prepare($sql);
+$stmt->execute($params);
 
 $seguros = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -17,7 +34,7 @@ $seguros = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
   <?php include 'modules/layout/header.php'; ?>
   <title>Creacion de Seguros</title>
-  
+
   <style>
     body {
       background-color: #f5f5f5;
@@ -47,6 +64,7 @@ $seguros = $stmt->fetchAll(PDO::FETCH_ASSOC);
       font-size: 0.9rem;
     }
   </style>
+<link rel="stylesheet" type="text/css" href="/public/assets/datatables/css/dataTables.bootstrap5.min.css"/>
 
 
 
@@ -58,11 +76,20 @@ $seguros = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="card p-3 mb-4">
       <h5 class="mb-2">Todas los registros con cuotas</h5>
       <p class="mb-3">Realiza los pagos de cada cliente</p>
-      <table class="table table-hover">
+       <form class="col-6 d-flex" method="GET" action="">
+
+<input class="form-control me-2" type="search" name="buscar" placeholder="Buscar por cliente, modelo o marca">
+
+<button class="btn btn-outline-success" type="submit">Buscar</button>
+
+</form>
+      <table id="tablaSeguros" class="table table-hover">
         <thead>
           <tr>
+            <th>No.Seguro</th>
             <th>Cliente</th>
             <th>Vehículo</th>
+            <th>Cedula</th>
             <th>Fecha</th>
             <th>Total Pagado</th>
             <th>Total Cuota</th>
@@ -73,8 +100,10 @@ $seguros = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <tbody>
           <?php foreach ($seguros as $seguro): ?>
             <tr>
+              <td><?= htmlspecialchars($seguro['secuencia_seguro']) ?></td>
               <td><?= htmlspecialchars($seguro['nombre']) ?></td>
               <td><?= htmlspecialchars($seguro['tipo_vehiculo']) ?> - <?= htmlspecialchars($seguro['marca']) ?></td>
+              <td><?= htmlspecialchars($seguro['cedula']) ?></td>
               <td><?= htmlspecialchars($seguro['fecha_creacion']) ?></td>
               <td>$<?= number_format($seguro['montoInicial'], 2) ?></td>
               <td>$<?= number_format($seguro['montoSeguro'], 2) ?></td>
@@ -93,7 +122,7 @@ $seguros = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 Aplicar Pago
               </button>
               <button onclick="window.location.href='/mostrarpagos?id=<?= $seguro['id'] ?>'" class="btn btn-success btn-sm"><i class="bi bi-eye-fill"></i></button>
-              
+
               <div class="btn-group">
                     <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                         Descargas
@@ -123,7 +152,7 @@ $seguros = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <div class="modal-header">
           <h5 class="modal-title" id="modalPagoLabel">Aplicar Pago</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-        </div>  
+        </div>
         <div class="modal-body">
           <p><strong>Total Pagado:</strong> <span id="montoPagarModal"></span></p>
           <p><strong>Total del seguro:</strong> <span id="totalSeguroModal"></span></p>
@@ -137,9 +166,23 @@ $seguros = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
   </div>
 
-  <script>
-    // FRANK: Como tal no es necesario que al principio la variable se declare en null
-    let seguroId = null;
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="/public/assets/datatables/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="/public/assets/datatables/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+
+   $(document).ready(function() {
+        $('#tablaSeguros').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+            }
+        });
+    });
+  // FRANK: Como tal no es necesario que al principio la variable se declare en null
+  let seguroId = null;
 
     document.querySelectorAll('.aplicarPago').forEach(btn => {
       btn.addEventListener('click', function() {

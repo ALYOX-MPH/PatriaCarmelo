@@ -320,9 +320,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
         const tarifas = {
             moto: {
-                'moto-ex': 1666.92,
-                'moto-premium': 2092.79,
-                'moto-max': 2712.53
+                'moto-ex': 1666,
+                'moto-premium': 2092,
+                'moto-max': 2712
             },
             automovilPrivado: {
                 elemental: 3600,

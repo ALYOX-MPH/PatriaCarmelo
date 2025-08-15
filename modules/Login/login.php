@@ -8,7 +8,7 @@
   <style>
     body {
       background-color: #ffffffff;
-      color: white;
+    
     }
     .login-container {
       max-width: 400px;
@@ -43,8 +43,8 @@
       const user = document.getElementById("usuario").value.trim();
       const pass = document.getElementById("clave").value.trim();
 
-      if (user === "admin" && pass === "1234") {
-        window.location.href = "home"; // ← Aquí va tu panel
+      if (user === "admin" && pass === "1234" || user === "carmelocp" && pass === "cpa1974" || user === "yohannyr" && pass === "1216kr" || user === "achanttyr" && pass === "1001r") {
+        window.location.href = "home"; 
       } else {
         document.getElementById("mensaje").innerText = "Credenciales incorrectas.";
       }
