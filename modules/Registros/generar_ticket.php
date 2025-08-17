@@ -35,7 +35,7 @@ $vigencia_fin = $fecha_vencimiento->format('d/m/Y');
 // Dimensiones: 85.6mm x 53.98mm
 $mpdf = new Mpdf([
     'mode' => 'utf-8',
-    'format' => [85.6, 53.98],
+    'format' => [85.6, 63.98],
     'margin_left' => 3,
     'margin_right' => 3,
     'margin_top' => 3,
@@ -58,6 +58,7 @@ $html = '
             position: relative;
             display: flex;
             flex-direction: column;
+            padding-left: 10px;
         }
         .header-logo {
             text-align: left;
@@ -83,10 +84,11 @@ $html = '
             font-weight: bold;
             color: #000000ff;
             text-transform: uppercase;
-            font-size: 8px;
+            font-size: 10px;
+            
         }
         .value {
-            font-size: 8px;
+            font-size: 10px;
             font-weight: normal;
         }
     </style>
@@ -134,6 +136,11 @@ $html = '
             <div class="data-item">
                 <span class="label">Vigencia:</span>
                 <span class="value">' . $vigencia_inicio . ' – ' . $vigencia_fin . '</span>
+            </div>
+
+            <div class="data-item">
+                <span class="label">Observacion:</span>
+                <span class="value"></span>
             </div>
         </div>
     </div>';

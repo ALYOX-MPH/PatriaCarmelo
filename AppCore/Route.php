@@ -7,7 +7,7 @@ $Module= strtolower(trim($CleanURL, "/"));
 
 switch ($Module) {
     case 'home':
-        require_once "./modules/Home/index.php";
+        require_once "./modules/home/index.php";
         break;
 
     case 'agregarseguro':
